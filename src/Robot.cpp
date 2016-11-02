@@ -232,6 +232,18 @@ public:
 		right1.Set(0.0);
 		right2.Set(0.0);
 		}
+	void Turn45Right()
+	{
+		left1.Set(0.2);
+		left2.Set(0.2);
+		right1.Set(0.375);
+		right2.Set(0.375);
+		Wait(1.0);
+		left1.Set(0.0);
+		left2.Set(0.0);
+		right1.Set(0.0);
+		right2.Set(0.0);
+	}
 	void shoot()
 	{
 		//catapult cocked!
@@ -257,6 +269,12 @@ public:
 //		Wait(2.0);
 //		Drive(6);
 		//intakecontrol->SetSetpoint(1);
+
+//		Timer T1;
+//		T1.Reset;
+//		T1.Start();
+//		T1.Get();
+
 		printf("SW:%i\n", auto_switch.Get());
 
 		int Auto_Sel=Map(mode_pot.GetVoltage(), 0, 5, 1, 12);
@@ -285,12 +303,14 @@ public:
 //				intake_arm.Set(0.0);
 				drivestright(2.5, 0.8);
 			}
-//			if(Auto_Sel==4)
-//			{
-//				intake_arm.Set(-1.0);
-//				Wait(1);
-//				intake_arm.Set(0.0);
-//			}
+			if(Auto_Sel==4)
+			{
+				intake_arm.Set(-1.0);
+				Wait(1);
+				intake_arm.Set(0.0);
+				drivestright(4, 0.4);
+				Turn45Right();
+			}
 //			intake_arm.Set(-1.0);
 //			Wait(1);
 //			intake_arm.Set(0.0);
@@ -319,12 +339,27 @@ public:
 	void OperatorControl() //code in curly brackets conditions in parenthesis
 	{
 
-		while (IsOperatorControl() && IsEnabled())
-		{
-			//drivetrain //working
+		int lastR=0;
+		int lastL=0;
+				while (IsOperatorControl() && IsEnabled())
+				{
+					//drivetrain //working
+
+					//printf("Y1:%f", stick1.GetY());
+					int curR= Renc->Get();
+					int curL= Lenc->Get();
+					if(curR!=lastR)
+					{
+						printf("Renc:%i", Renc->Get());
+						lastR=curR;
+					}
+					if(curL!=lastL)
+					{
+						printf("Lenc:%i", Lenc->Get());
+						lastL=curL;
+					}
 			left1.Set(-1*stick1.GetY());
 			left2.Set(-1*stick1.GetY());
-			printf("Y1:%f", stick1.GetY());
 			right1.Set(stick2.GetY());
 			right2.Set(stick2.GetY());
 
