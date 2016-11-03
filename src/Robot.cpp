@@ -2,6 +2,8 @@
 #include "math.h"
 #include <PID.h>
 #define tau 6.2831
+bool pressed =false;
+bool speedOverride= false;// used for toggle-- toggle only works with boolean then we ask later if this boolean has chnaged
 
 long Map(float x, float in_min, float in_max, float out_min, float out_max){// use this function to match two value's scales proportionally
 	return ((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
@@ -68,6 +70,8 @@ public:
 		kenc = new Encoder(6, 7, true, Encoder::EncodingType::k4X);
 
 	}
+
+
 	void Drive(float distance)
 	{
 		float wheel_radius =3;
@@ -144,7 +148,7 @@ public:
 	right1.Set(rightOutput);
 	right2.Set(rightOutput);
 	}
-	void drivestright(float time, float speed)
+	void drivestraight(float time, float speed)
 	{
 		gyro.Reset();
 		Wait(1.0);
@@ -158,7 +162,7 @@ public:
 		}
 		DriveFRC(0.0,0.0);
 	}
-	void drivestrightwithencoders(float target, float speed)
+	void drivestraightwithencoders(float target, float speed)
 	{
 		gyro.Reset();
 		Renc->Reset();
@@ -252,6 +256,13 @@ public:
 		//intake lowered!?
 		//shooter solenoid release!
 	}
+	void EjectBall()
+	{
+		intake->Set(Relay::Value::kForward);
+		Wait(0.5);
+		intake->Set(Relay::Value::kOff);
+	}
+
 	void Autonomous()  //codin hard or hardly codin see?
 	{
 
@@ -287,40 +298,45 @@ public:
 				intake_arm.Set(-1.0);
 				Wait(1);
 				intake_arm.Set(0.0);
-				drivestright(4, 0.4);
+				drivestraight(4, 0.4);
 			}
 			if(Auto_Sel==3)//mote 				// ARM UP HUMAN
 			{
 //				intake_arm.Set(-1.0);
 //				Wait(1);
 //				intake_arm.Set(0.0);
-				drivestright(3.5, 0.8);
+				drivestraight(3.5, 0.8);
 			}
 			if(Auto_Sel==2)// rough terrain 	// ARM UP HUMAN
 			{
 //				intake_arm.Set(-1.0);
 //				Wait(1);
 //				intake_arm.Set(0.0);
-				drivestright(2.5, 0.8);
+				drivestraight(2.5, 0.8);
 			}
 			if(Auto_Sel==4)
 			{
-				intake_arm.Set(-1.0);
-				Wait(1);
+				intake_arm.Set(-0.5);
+				Wait(1.5);
 				intake_arm.Set(0.0);
-				drivestright(4, 0.4);
+				drivestraight(4, -0.4);
+				Wait(1.0);
 				Turn45Right();
+				Wait(1.0);
+				drivestraight(4,-0.4);
+				Wait(1.0);
+				EjectBall();
 			}
 //			intake_arm.Set(-1.0);
 //			Wait(1);
 //			intake_arm.Set(0.0);
-//			drivestright(4, 0.4);//low passage
+//			drivestraight(4, 0.4);//low passage
 
 		}
 		else
 		{}
-	//drivestright(2, 0.8);// for mote
-	//drivestright(1.5, 0.8);// for rough terrain
+	//drivestraight(2, 0.8);// for mote
+	//drivestraight(1.5, 0.8);// for rough terrain
 	//		left1.Set(-0.6);
 	//		left2.Set(-0.6);
 	//		right1.Set(0.6);
@@ -358,10 +374,38 @@ public:
 						printf("Lenc:%i", Lenc->Get());
 						lastL=curL;
 					}
-			left1.Set(-1*stick1.GetY());
-			left2.Set(-1*stick1.GetY());
-			right1.Set(stick2.GetY());
-			right2.Set(stick2.GetY());
+
+
+
+
+
+	if(stick1.GetRawButton(1)) { // when we press the switch for the first time,
+		if(!pressed) { // set as pressed
+			if(speedOverride==true){ // when we press it again, it gets turned off
+				speedOverride=false;
+			} else {
+				speedOverride =true;
+			}
+		}
+		pressed = true; // keeping track of pressed allows the button to be
+	} else { // held down
+	pressed = false;
+	}
+			if(speedOverride== true)  // make robot slow
+			{
+				left1.Set(-1*stick1.GetY()/2);
+				left2.Set(-1*stick1.GetY()/2);
+				right1.Set(stick2.GetY()/2);
+				right2.Set(stick2.GetY()/2);
+
+			}
+			else // make robot fast
+			{
+				left1.Set(-1*stick1.GetY());
+				left2.Set(-1*stick1.GetY());
+				right1.Set(stick2.GetY());
+				right2.Set(stick2.GetY());
+			}
 
 			//lift
 			if(stick2.GetTrigger()&&LiftSwitch.Get()==false)//UP // "==" means comparative, "= means assignment"
